@@ -92,3 +92,5 @@ postgres-python=# SELECT * FROM djangoapp_user;
 ----+------+----------+----------
   1 | aaa  | aaa@mail | 
   3 | ccc  | ccc@mail | 
+
+  OK
