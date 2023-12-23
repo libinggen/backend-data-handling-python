@@ -32,7 +32,7 @@ def validate_password_complexity(password):
         raise ValueError("Password must include at least one special character.")
 
     # Common words check (you can customize this list)
-    common_words = ["password", "123456", "qwerty", "admin"]
-    for word in common_words:
+    COMMON_WORDS = ["password", "123456", "qwerty", "admin"]
+    for word in COMMON_WORDS:
         if word.lower() in password.lower():
             raise ValueError(f"Password should not contain common words like '{word}'.")
