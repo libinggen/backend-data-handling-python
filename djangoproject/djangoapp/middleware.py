@@ -1,6 +1,8 @@
 # middleware.py
+from django.db.utils import ProgrammingError
 from django.http import JsonResponse
 from .utils import CustomError
+
 
 class CustomErrorMiddleware:
     def __init__(self, get_response):
@@ -13,4 +15,6 @@ class CustomErrorMiddleware:
     def process_exception(self, request, exception):
         if isinstance(exception, CustomError):
             return JsonResponse({"error": str(exception)}, status=400)
+        elif isinstance(exception, ProgrammingError):
+            return JsonResponse({"error": str(exception)}, status=500)
         return None
