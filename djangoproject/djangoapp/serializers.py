@@ -2,12 +2,20 @@
 from rest_framework import serializers
 from .models import User
 import re
+import uuid
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = "__all__"
+
+    def validate_uuid(self, value):
+        # Check if the provided UUID is valid
+        try:
+            uuid_obj = uuid.UUID(value, version=4)
+        except ValueError:
+            raise serializers.ValidationError("Invalid UUID format.")
 
     def validate_name(self, value):
         existing_users = User.objects.filter(name=value)
