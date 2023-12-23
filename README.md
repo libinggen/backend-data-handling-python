@@ -92,3 +92,14 @@ postgres-python=# SELECT * FROM djangoapp_user;
 ----+------+----------+----------
   1 | aaa  | aaa@mail | 
   3 | ccc  | ccc@mail | 
+
+
+psycopg2.errors.DuplicateColumn: column "password" of relation "djangoapp_user" already exists
+
+delete all migrations
+
+python manage.py makemigrations
+
+python manage.py migrate
+
+docker compose up --build
