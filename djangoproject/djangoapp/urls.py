@@ -6,7 +6,7 @@ from . import views
 app_name = "user"
 
 urlpatterns = [
-    path("users/", views.UserListView.as_view(), name="user-list"),
+    path("", views.UserListView.as_view(), name="user-list"),
     path("create/", views.UserListView.as_view(), name="create-user"),
     path("user/<uuid:pk>/", views.UserDetailView.as_view(), name="user-detail"),
     path("update-user/<uuid:pk>/", views.UserDetailView.as_view(), name="update-user"),
