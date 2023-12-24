@@ -17,27 +17,11 @@ class UserSerializer(serializers.ModelSerializer):
         except ValueError:
             raise serializers.ValidationError("Invalid UUID format.")
 
-    # def validate_name(self, value):
-    #     existing_users = User.objects.filter(name=value)
+    def validate_name(self, value):
+        return value
 
-    #     if self.instance:
-    #         existing_users = existing_users.exclude(pk=self.instance.pk)
-
-    #     if existing_users.exists():
-    #         handle_common_errors("The username is already in use.")
-
-    #     return value
-
-    # def validate_email(self, value):
-    #     existing_users = User.objects.filter(email=value)
-
-    #     if self.instance:
-    #         existing_users = existing_users.exclude(pk=self.instance.pk)
-
-    #     if existing_users.exists():
-    #         handle_common_errors("The email is already in use.")
-
-    #     return value
+    def validate_email(self, value):
+        return value
 
     def validate_password(self, value):
         validate_password_complexity(value)
