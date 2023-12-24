@@ -17,4 +17,6 @@ class CustomErrorMiddleware:
             return JsonResponse({"error": str(exception)}, status=400)
         elif isinstance(exception, ProgrammingError):
             return JsonResponse({"error": str(exception)}, status=500)
+        elif isinstance(exception, TypeError):
+            return JsonResponse({"error": str(exception)}, status=500)
         return None

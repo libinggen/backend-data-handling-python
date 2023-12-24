@@ -40,46 +40,52 @@ class UserSerializer(serializers.ModelSerializer):
     #     return value
 
     def validate_password(self, value):
-        try:
-            validate_password_complexity(value)
-        except ValueError as e:
-            handle_common_errors(str(e))
+        validate_password_complexity(value)
+        return value
 
+    def validate_new_password(self, value):
+        validate_password_complexity(value)
         return value
 
     def validate(self, data):
+        password_changed, name_changed, email_changed = False
+        # password_changed, name_changed, email_changed = False, False, False
+
         if "password" in data:
+            password = data.get("password")
+            if self.instance.password != data.get("password"):
+                handle_common_errors("The password is incorrect.")
 
-            def check_password_same(password_same):
-                if not password_same:
-                    handle_common_errors("The password is incorrect.")
-
-            password_same = self.instance.password == data.get("password")
+            if "new_password" in data:
+                new_password = data.get("new_password")
+                password_changed = password != new_password
+                if not password_changed:
+                    handle_common_errors(
+                        "New password cannot be the same as the current password."
+                    )
+                data["password"] = new_password
+                data["new_password"] = None
 
             if "name" in data:
                 name = data.get("name")
-                if name != self.instance.name:
-                    existing_users = User.objects.filter(name=name)
-                    if existing_users.exists():
-                        handle_common_errors("The username is already in use.")
-                    else:
-                        check_password_same(password_same)
-                        return data
-
+                name_changed = name != self.instance.name
             if "email" in data:
                 email = data.get("email")
-                if email != self.instance.email:
-                    existing_users = User.objects.filter(email=email)
-                    if existing_users.exists():
-                        handle_common_errors("The email is already in use.")
-                    else:
-                        check_password_same(password_same)
-                        return data
+                email_changed = email != self.instance.email
 
-            if password_same:
-                handle_common_errors(
-                    "New password cannot be the same as the current password."
-                )
+            if not (password_changed or name_changed or email_changed):
+                handle_common_errors("The username is already in use.")
+
+            if name_changed:
+                existing_users = User.objects.filter(name=name)
+                if existing_users.exists():
+                    handle_common_errors("The username is already in use.")
+
+            if email_changed:
+                existing_users = User.objects.filter(email=email)
+                if existing_users.exists():
+                    handle_common_errors("The email is already in use.")
+
         else:
             handle_common_errors("Password is required.")
 
