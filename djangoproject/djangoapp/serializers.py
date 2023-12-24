@@ -80,11 +80,10 @@ class UserSerializer(serializers.ModelSerializer):
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["name", "email", "password", "new_password"]
+        fields = ["uuid","name", "email", "password", "new_password"]
 
-    # uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    name = serializers.CharField(required=False, max_length=50)
-    email = serializers.EmailField(required=False, max_length=250)
+    name = serializers.CharField(required=False, min_length=3, max_length=50)
+    email = serializers.EmailField(required=False, min_length=5, max_length=250)
     password = serializers.CharField(
         required=True, min_length=8, max_length=14, allow_null=False, allow_blank=False
     )
