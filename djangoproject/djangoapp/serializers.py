@@ -37,6 +37,7 @@ class UserSerializer(serializers.ModelSerializer):
         email_exists = existing_users.exists()
         if email_exists:
             handle_common_errors("The email is already in use.")
+        return value
 
     def validate_password(self, value):
         validate_password_complexity(value)
