@@ -89,13 +89,6 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     )
     new_password = serializers.CharField(required=False, min_length=8, max_length=14)
 
-    # def validate_uuid(self, value):
-    #     # Check if the provided UUID is valid
-    #     try:
-    #         uuid_obj = uuid.UUID(value, version=4)
-    #     except ValueError:
-    #         raise serializers.ValidationError("Invalid UUID format.")
-
     def validate_name(self, value):
         # Check if the name starts with a letter
         if not value[0].isalpha():

@@ -11,6 +11,7 @@ urlpatterns = [
     path("user/<uuid:pk>", views.UserDetailView.as_view(), name="user-detail"),
     path("update-user/<uuid:pk>", views.UserDetailView.as_view(), name="update-user"),
     path("delete-user/<uuid:pk>", views.UserDetailView.as_view(), name="delete-user"),
+    path('error/', views.custom_error_view, name='custom-error'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

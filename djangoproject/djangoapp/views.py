@@ -4,6 +4,7 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from .models import User
 from .serializers import UserSerializer, UserUpdateSerializer
+from django.shortcuts import render
 
 
 class UserListView(APIView):
@@ -38,3 +39,7 @@ class UserDetailView(APIView):
         user = get_object_or_404(User, uuid=pk)
         user.delete()
         return Response("User successfully deleted!", status=status.HTTP_204_NO_CONTENT)
+
+
+def custom_error_view(request, exception=None):
+    return render(request, "custom_error.html", status=404)
