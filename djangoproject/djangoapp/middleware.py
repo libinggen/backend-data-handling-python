@@ -15,8 +15,10 @@ class CustomErrorMiddleware:
     def process_exception(self, request, exception):
         if isinstance(exception, CustomError):
             return JsonResponse({"error": str(exception)}, status=400)
-        elif isinstance(exception, ProgrammingError):
-            return JsonResponse({"error": str(exception)}, status=500)
-        elif isinstance(exception, TypeError):
+        elif (
+            isinstance(exception, ProgrammingError)
+            or isinstance(exception, TypeError)
+            or isinstance(exception, UnboundLocalError)
+        ):
             return JsonResponse({"error": str(exception)}, status=500)
         return None

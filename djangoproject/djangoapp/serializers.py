@@ -48,8 +48,9 @@ class UserSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        password_changed, name_changed, email_changed = False
-        # password_changed, name_changed, email_changed = False, False, False
+        password_changed = False
+        name_changed = False
+        email_changed = False
 
         if "password" in data:
             password = data.get("password")
