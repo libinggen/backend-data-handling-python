@@ -1,4 +1,5 @@
 # middleware.py
+from django.db import IntegrityError
 from django.db.utils import ProgrammingError
 from django.http import JsonResponse
 from .utils import CustomError
@@ -21,6 +22,7 @@ class CustomErrorMiddleware:
             or isinstance(exception, UnboundLocalError)
             or isinstance(exception, AssertionError)
             or isinstance(exception, AttributeError)
+            or isinstance(exception, IntegrityError)
         ):
             return JsonResponse({"error": str(exception)}, status=500)
         return None

@@ -24,7 +24,19 @@ class UserSerializer(serializers.ModelSerializer):
     def validate_name(self, value):
         if not value[0].isalpha():
             raise handle_common_errors("Name must start with a letter.")
+
+        existing_users = User.objects.filter(name=value)
+        name_exists = existing_users.exists()
+        if name_exists:
+            handle_common_errors("The username is already in use.")
+
         return value
+
+    def validate_email(self, value):
+        existing_users = User.objects.filter(email=value)
+        email_exists = existing_users.exists()
+        if email_exists:
+            handle_common_errors("The email is already in use.")
 
     def validate_password(self, value):
         validate_password_complexity(value)
