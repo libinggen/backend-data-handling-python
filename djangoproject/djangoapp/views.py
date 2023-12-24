@@ -1,17 +1,21 @@
-from rest_framework.views import APIView
+# views.py
+from django.shortcuts import get_object_or_404, render
+from rest_framework import generics, status
 from rest_framework.response import Response
-from rest_framework import generics
-from rest_framework import status
-from django.shortcuts import get_object_or_404
 from .models import User
 from .serializers import UserSerializer, UserUpdateSerializer
-from django.shortcuts import render
 
 
 class UserListView(generics.ListCreateAPIView):
-    def get(self, request):
-        users = User.objects.all()
-        serializer = UserSerializer(users, many=True)
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
