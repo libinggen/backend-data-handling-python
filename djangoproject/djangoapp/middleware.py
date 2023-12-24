@@ -1,8 +1,12 @@
 # middleware.py
+import logging
 from django.db import IntegrityError
 from django.db.utils import ProgrammingError
 from django.http import JsonResponse
+from rest_framework import status
 from .utils import CustomError
+
+logger = logging.getLogger(__name__)
 
 
 class CustomErrorMiddleware:
@@ -15,7 +19,12 @@ class CustomErrorMiddleware:
 
     def process_exception(self, request, exception):
         if isinstance(exception, CustomError):
-            return JsonResponse({"error": str(exception)}, status=400)
+            # Log the custom error
+            logger.error(f"Custom Error: {str(exception)}")
+
+            return JsonResponse(
+                {"error": str(exception)}, status=status.HTTP_400_BAD_REQUEST
+            )
         elif (
             isinstance(exception, ProgrammingError)
             or isinstance(exception, TypeError)
@@ -24,5 +33,11 @@ class CustomErrorMiddleware:
             or isinstance(exception, AttributeError)
             or isinstance(exception, IntegrityError)
         ):
-            return JsonResponse({"error": str(exception)}, status=500)
+            # Log the exception
+            logger.exception("Unhandled Exception")
+
+            return JsonResponse(
+                {"error": str(exception)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
         return None

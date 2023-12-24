@@ -1,7 +1,11 @@
 # serializers.py
 from rest_framework import serializers
 from .models import User
-from .utils import validate_password_complexity, handle_common_errors
+from .utils import (
+    validate_password_complexity,
+    handle_common_errors,
+    is_name_or_email_exists,
+)
 import uuid
 
 
@@ -25,16 +29,14 @@ class UserSerializer(serializers.ModelSerializer):
         if not value[0].isalpha():
             raise handle_common_errors("Name must start with a letter.")
 
-        existing_users = User.objects.filter(name=value)
-        name_exists = existing_users.exists()
+        name_exists, _ = is_name_or_email_exists(name=value)
         if name_exists:
             handle_common_errors("The username is already in use.")
 
         return value
 
     def validate_email(self, value):
-        existing_users = User.objects.filter(email=value)
-        email_exists = existing_users.exists()
+        _, email_exists = is_name_or_email_exists(email=value)
         if email_exists:
             handle_common_errors("The email is already in use.")
         return value
@@ -61,7 +63,6 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     new_password = serializers.CharField(required=False, min_length=8, max_length=14)
 
     def validate_name(self, value):
-        # Check if the name starts with a letter
         if not value[0].isalpha():
             handle_common_errors("Name must start with a letter.")
         return value
@@ -100,15 +101,13 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             if not password_changed:
                 if "name" in data:
                     name = data.get("name")
-                    existing_users = User.objects.filter(name=name)
-                    name_exists = existing_users.exists()
+                    name_exists, _ = is_name_or_email_exists(name=name)
                     if name_exists and not "email" in data:
                         handle_common_errors("The username is already in use.")
 
                 if "email" in data:
                     email = data.get("email")
-                    existing_users = User.objects.filter(email=email)
-                    email_exists = existing_users.exists()
+                    _, email_exists = is_name_or_email_exists(email=email)
                     if email_exists and not "name" in data:
                         handle_common_errors("The email is already in use.")
 
