@@ -80,6 +80,8 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         password_changed = False
         name_exists = False
         email_exists = False
+        name = None
+        email = None
 
         if "password" in data:
             password = data.get("password")
@@ -101,19 +103,20 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             if not password_changed:
                 if "name" in data:
                     name = data.get("name")
-                    name_exists, _ = is_name_or_email_exists(name=name)
-                    if name_exists and not "email" in data:
-                        handle_common_errors("The username is already in use.")
-
                 if "email" in data:
                     email = data.get("email")
-                    _, email_exists = is_name_or_email_exists(email=email)
-                    if email_exists and not "name" in data:
-                        handle_common_errors("The email is already in use.")
 
-                if name_exists and email_exists:
-                    error_messages.append("The username is already in use.")
-                    error_messages.append("The email is already in use.")
+                if name:
+                    name_exists, _ = is_name_or_email_exists(name=name)
+                    if name_exists and (not email or email == self.instance.email):
+                        handle_common_errors("The username is already in use.")
+
+                if email:
+                    _, email_exists = is_name_or_email_exists(email=email)
+                    if email_exists and (not name or name == self.instance.name):
+                        error_messages.append("The email is already in use.")
+
+                if error_messages:
                     handle_common_errors(error_messages)
         else:
             handle_common_errors("Password is required.")
