@@ -18,9 +18,9 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Invalid UUID format.")
 
     def validate_name(self, value):
-        return value
-
-    def validate_email(self, value):
+        # Check if the name starts with a letter
+        if not value[0].isalpha():
+            raise serializers.ValidationError("Name must start with a letter.")
         return value
 
     def validate_password(self, value):
