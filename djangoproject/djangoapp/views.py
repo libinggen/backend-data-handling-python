@@ -19,10 +19,24 @@ class UserListView(generics.ListCreateAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+# class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
+#     queryset = User.objects.all()
+#     serializer_class = UserSerializer
+
+#     def get(self, request, pk):
+#         user = get_object_or_404(User, uuid=pk)
+#         serializer = UserSerializer(instance=user)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
-    def get(self, request, pk):
-        user = get_object_or_404(User, uuid=pk)
-        serializer = UserSerializer(instance=user)
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    lookup_field = "uuid"
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
