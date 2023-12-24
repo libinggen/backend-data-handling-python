@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from .models import User
-from .serializers import UserSerializer
+from .serializers import UserSerializer, UserUpdateSerializer
 
 
 class UserListView(APIView):
@@ -28,7 +28,7 @@ class UserDetailView(APIView):
 
     def put(self, request, pk):
         user = get_object_or_404(User, uuid=pk)
-        serializer = UserSerializer(instance=user, data=request.data)
+        serializer = UserUpdateSerializer(instance=user, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)

@@ -75,3 +75,78 @@ class UserSerializer(serializers.ModelSerializer):
             handle_common_errors("Password is required.")
 
         return data
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["name", "email", "password", "new_password"]
+
+    # uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    name = serializers.CharField(required=False, max_length=50)
+    email = serializers.EmailField(required=False, max_length=250)
+    password = serializers.CharField(
+        required=True, min_length=8, max_length=14, allow_null=False, allow_blank=False
+    )
+    new_password = serializers.CharField(required=False, min_length=8, max_length=14)
+
+    # def validate_uuid(self, value):
+    #     # Check if the provided UUID is valid
+    #     try:
+    #         uuid_obj = uuid.UUID(value, version=4)
+    #     except ValueError:
+    #         raise serializers.ValidationError("Invalid UUID format.")
+
+    def validate_name(self, value):
+        # Check if the name starts with a letter
+        if not value[0].isalpha():
+            handle_common_errors("Name must start with a letter.")
+        return value
+
+    def validate_password(self, value):
+        validate_password_complexity(value)
+        return value
+
+    def validate_new_password(self, value):
+        validate_password_complexity(value)
+        return value
+
+    def validate(self, data):
+        if "password" in data:
+            password = data.get("password")
+            if self.instance.password != data.get("password"):
+                handle_common_errors("The password is incorrect.")
+
+            if not ("new_password" in data or "name" in data or "email" in data):
+                handle_common_errors("Must include new password or name or email.")
+            if "new_password" in data:
+                new_password = data.get("new_password")
+                if not password == new_password:
+                    handle_common_errors(
+                        "New password cannot be the same as the current password."
+                    )
+                data["password"] = new_password
+                data["new_password"] = None
+
+            name_exists = False
+            email_exists = False
+            if "name" in data:
+                name = data.get("name")
+                existing_users = User.objects.filter(name=name)
+                name_exists = existing_users.exists()
+                if name_exists and not "email" in data:
+                    handle_common_errors("The username is already in use.")
+
+            if "email" in data:
+                email = data.get("email")
+                existing_users = User.objects.filter(email=email)
+                email_exists = existing_users.exists()
+                if email_exists and not "name" in data:
+                    handle_common_errors("The email is already in use.")
+
+            if name_exists and email_exists:
+                handle_common_errors("The username is already in use.")
+        else:
+            handle_common_errors("Password is required.")
+
+        return data

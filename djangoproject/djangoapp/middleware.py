@@ -19,6 +19,7 @@ class CustomErrorMiddleware:
             isinstance(exception, ProgrammingError)
             or isinstance(exception, TypeError)
             or isinstance(exception, UnboundLocalError)
+            or isinstance(exception, AssertionError)
         ):
             return JsonResponse({"error": str(exception)}, status=500)
         return None
