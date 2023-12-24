@@ -80,7 +80,7 @@ class UserSerializer(serializers.ModelSerializer):
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["uuid","name", "email", "password", "new_password"]
+        fields = ["uuid", "name", "email", "password", "new_password"]
 
     name = serializers.CharField(required=False, min_length=3, max_length=50)
     email = serializers.EmailField(required=False, min_length=5, max_length=250)
@@ -111,6 +111,11 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
+        error_messages = []
+        password_changed = False
+        name_exists = False
+        email_exists = False
+
         if "password" in data:
             password = data.get("password")
             if self.instance.password != data.get("password"):
@@ -120,31 +125,33 @@ class UserUpdateSerializer(serializers.ModelSerializer):
                 handle_common_errors("Must include new password or name or email.")
             if "new_password" in data:
                 new_password = data.get("new_password")
-                if not password == new_password:
+                password_changed = password != new_password
+                if not password_changed:
                     handle_common_errors(
                         "New password cannot be the same as the current password."
                     )
                 data["password"] = new_password
                 data["new_password"] = None
 
-            name_exists = False
-            email_exists = False
-            if "name" in data:
-                name = data.get("name")
-                existing_users = User.objects.filter(name=name)
-                name_exists = existing_users.exists()
-                if name_exists and not "email" in data:
-                    handle_common_errors("The username is already in use.")
+            if not password_changed:
+                if "name" in data:
+                    name = data.get("name")
+                    existing_users = User.objects.filter(name=name)
+                    name_exists = existing_users.exists()
+                    if name_exists and not "email" in data:
+                        handle_common_errors("The username is already in use.")
 
-            if "email" in data:
-                email = data.get("email")
-                existing_users = User.objects.filter(email=email)
-                email_exists = existing_users.exists()
-                if email_exists and not "name" in data:
-                    handle_common_errors("The email is already in use.")
+                if "email" in data:
+                    email = data.get("email")
+                    existing_users = User.objects.filter(email=email)
+                    email_exists = existing_users.exists()
+                    if email_exists and not "name" in data:
+                        handle_common_errors("The email is already in use.")
 
-            if name_exists and email_exists:
-                handle_common_errors("The username is already in use.")
+                if name_exists and email_exists:
+                    error_messages.append("The username is already in use.")
+                    error_messages.append("The email is already in use.")
+                    handle_common_errors(error_messages)
         else:
             handle_common_errors("Password is required.")
 
