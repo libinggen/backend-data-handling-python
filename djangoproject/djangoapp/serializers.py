@@ -1,124 +1,100 @@
-# serializers.py
+# djangoapp/serializers.py
+from django.contrib.auth.hashers import check_password
 from rest_framework import serializers
-from .models import User
-from .utils import (
-    validate_password_complexity,
-    handle_common_errors,
-    is_name_or_email_exists,
-)
-import uuid
+from serializers.serializers import PasswordSerializer, UUIDSerializer
+from utils.exception_handler import handle_validation_errors
+from .utils import is_username_or_email_exists
+from .models import CustomUser
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(UUIDSerializer, PasswordSerializer, serializers.ModelSerializer):
     class Meta:
-        model = User
-        fields = ["uuid", "name", "email", "password"]
-
-    name = serializers.CharField(min_length=3, max_length=50)
-    email = serializers.EmailField(min_length=5, max_length=250)
-    password = serializers.CharField(min_length=8, max_length=14)
-
-    def validate_uuid(self, value):
-        # Check if the provided UUID is valid
-        try:
-            uuid_obj = uuid.UUID(value, version=4)
-        except ValueError:
-            raise handle_common_errors("Invalid UUID format.")
-
-    def validate_name(self, value):
-        if not value[0].isalpha():
-            raise handle_common_errors("Name must start with a letter.")
-
-        name_exists, _ = is_name_or_email_exists(name=value)
-        if name_exists:
-            handle_common_errors("The username is already in use.")
-
-        return value
-
-    def validate_email(self, value):
-        _, email_exists = is_name_or_email_exists(email=value)
-        if email_exists:
-            handle_common_errors("The email is already in use.")
-        return value
-
-    def validate_password(self, value):
-        validate_password_complexity(value)
-        return value
-
-    def validate_new_password(self, value):
-        validate_password_complexity(value)
-        return value
+        model = CustomUser
+        fields = ["uuid", "username", "email"]
 
 
-class UserUpdateSerializer(serializers.ModelSerializer):
+class UserUpdateSerializer(
+    UUIDSerializer, PasswordSerializer, serializers.ModelSerializer
+):
+    """
+    Serializer for updating user data.
+
+    Includes validation for username, email, and password updates.
+    """
+
     class Meta:
-        model = User
-        fields = ["uuid", "name", "email", "password", "new_password"]
+        model = CustomUser
+        fields = ["uuid", "username", "email", "password", "password2"]
 
-    name = serializers.CharField(required=False, min_length=3, max_length=50)
-    email = serializers.EmailField(required=False, min_length=5, max_length=250)
-    password = serializers.CharField(
-        required=True, min_length=8, max_length=14, allow_null=False, allow_blank=False
-    )
-    new_password = serializers.CharField(required=False, min_length=8, max_length=14)
+    username = serializers.CharField(min_length=3, max_length=50, required=False)
+    email = serializers.EmailField(min_length=5, max_length=250, required=False)
 
-    def validate_name(self, value):
+    def validate_username(self, value):
         if not value[0].isalpha():
-            handle_common_errors("Name must start with a letter.")
-        return value
-
-    def validate_password(self, value):
-        validate_password_complexity(value)
-        return value
-
-    def validate_new_password(self, value):
-        validate_password_complexity(value)
+            handle_validation_errors("Username must start with a letter.")
         return value
 
     def validate(self, data):
+        """
+        Validate the serializer data.
+
+        Args:
+            data (dict): The data to be validated.
+
+        Returns:
+            dict: The validated data.
+
+        Raises:
+            CustomError: If validation fails.
+        """
+
         error_messages = []
         password_changed = False
-        name_exists = False
+        username_exists = False
         email_exists = False
-        name = None
+        username = None
         email = None
 
         if "password" in data:
             password = data.get("password")
-            if self.instance.password != data.get("password"):
-                handle_common_errors("The password is incorrect.")
+            if not check_password(password, self.instance.password):
+                handle_validation_errors("The password is incorrect.")
 
-            if not ("new_password" in data or "name" in data or "email" in data):
-                handle_common_errors("Must include new password or name or email.")
-            if "new_password" in data:
-                new_password = data.get("new_password")
-                password_changed = password != new_password
+            if not ("password2" in data or "username" in data or "email" in data):
+                handle_validation_errors(
+                    "Must include new password or username or email."
+                )
+            if "password2" in data:
+                password2 = data.get("password2")
+                password_changed = password != password2
                 if not password_changed:
-                    handle_common_errors(
+                    handle_validation_errors(
                         "New password cannot be the same as the current password."
                     )
-                data["password"] = new_password
-                data["new_password"] = None
+                data["password"] = password2
+                data["password2"] = None
 
             if not password_changed:
-                if "name" in data:
-                    name = data.get("name")
+                if "username" in data:
+                    username = data.get("username")
                 if "email" in data:
                     email = data.get("email")
 
-                if name:
-                    name_exists, _ = is_name_or_email_exists(name=name)
-                    if name_exists and (not email or email == self.instance.email):
-                        handle_common_errors("The username is already in use.")
+                if username:
+                    username_exists, _ = is_username_or_email_exists(username=username)
+                    if username_exists and (not email or email == self.instance.email):
+                        handle_validation_errors("The username is already in use.")
 
                 if email:
-                    _, email_exists = is_name_or_email_exists(email=email)
-                    if email_exists and (not name or name == self.instance.name):
+                    _, email_exists = is_username_or_email_exists(email=email)
+                    if email_exists and (
+                        not username or username == self.instance.username
+                    ):
                         error_messages.append("The email is already in use.")
 
                 if error_messages:
-                    handle_common_errors(error_messages)
+                    handle_validation_errors(error_messages)
         else:
-            handle_common_errors("Password is required.")
+            handle_validation_errors("Password is required.")
 
         return data
